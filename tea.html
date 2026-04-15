@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEA Acompanhante • Sistema de Monitoramento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        :root {
+            --tw-color-primary: #14b8a6;
+        }
+        
+        * {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .nav-link {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-link.active {
+            border-bottom: 3px solid #14b8a6;
+            color: #14b8a6;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        
+        .modal {
+            animation: modalPop 0.3s ease-out;
+        }
+        
+        @keyframes modalPop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .log-row {
+            transition: background-color 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-[#f0f9ff] text-slate-700">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-teal-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-x-3">
+                    <div class="w-9 h-9 bg-teal-500 rounded-2xl flex items-center justify-center text-white text-2xl shadow-inner">
+                        🧩
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-semibold tracking-tight text-teal-700">TEA Acompanhante</h1>
+                        <p class="text-[10px] text-teal-600 -mt-1">Crianças & Jovens com T.E.A.</p>
+                    </div>
+                </div>
+
+                <!-- Menu -->
+                <div class="flex items-center gap-x-8 text-sm font-medium">
+                    <button onclick="showSection('dashboard')" 
+                            class="nav-link flex items-center gap-x-2 active" id="nav-dashboard">
+                        🏠 <span>Início</span>
+                    </button>
+                    <button onclick="showSection('pacientes')" 
+                            class="nav-link flex items-center gap-x-2" id="nav-pacientes">
+                        👦 <span>Pacientes</span>
+                    </button>
+                    <button onclick="showSection('acompanhamento')" 
+                            class="nav-link flex items-center gap-x-2" id="nav-acompanhamento">
+                        📅 <span>Acompanhamento</span>
+                    </button>
+                    <button onclick="showSection('relatorios')" 
+                            class="nav-link flex items-center gap-x-2" id="nav-relatorios">
+                        📊 <span>Relatórios</span>
+                    </button>
+                    <button onclick="showSection('dicas')" 
+                            class="nav-link flex items-center gap-x-2" id="nav-dicas">
+                        💡 <span>Dicas</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-x-4">
+                    <div class="bg-teal-100 text-teal-700 text-xs font-medium px-3 py-1 rounded-3xl flex items-center gap-x-1">
+                        <div class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+                        Online
+                    </div>
+                    <button onclick="limparDados()" 
+                            class="text-slate-400 hover:text-red-500 transition-colors text-sm flex items-center gap-x-1">
+                        🗑️ Limpar dados
+                    </button>
+                    <div class="w-8 h-8 bg-teal-100 rounded-2xl flex items-center justify-center text-xl cursor-pointer hover:scale-110 transition">
+                        👨‍👧‍👦
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- ==================== DASHBOARD ==================== -->
+        <div id="dashboard" class="section active">
+            <h2 class="text-3xl font-semibold text-teal-700 mb-2">Bem-vindo ao TEA Acompanhante</h2>
+            <p class="text-teal-600 mb-8">Acompanhamento simples, visual e eficaz para crianças e jovens com Transtorno do Espectro Autista.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-3xl p-6 card-hover border border-teal-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-slate-500">Total de pacientes</p>
+                            <p id="total-pacientes" class="text-5xl font-semibold text-teal-600 mt-1">0</p>
+                        </div>
+                        <div class="text-5xl">👦👧</div>
+                    </div>
+                    <p class="text-teal-500 text-sm mt-4 flex items-center gap-x-1">
+                        <span class="text-green-500">↑</span> 2 novos este mês
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-3xl p-6 card-hover border border-teal-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-slate-500">Acompanhamentos hoje</p>
+                            <p id="logs-hoje" class="text-5xl font-semibold text-teal-600 mt-1">0</p>
+                        </div>
+                        <div class="text-5xl">📝</div>
+                    </div>
+                    <p class="text-teal-500 text-sm mt-4">Último log: <span id="ultimo-log" class="font-medium"></span></p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-3xl p-6 card-hover border border-teal-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-slate-500">Progresso médio</p>
+                            <p id="progresso-medio" class="text-5xl font-semibold text-teal-600 mt-1">7.8</p>
+                            <p class="text-xs text-slate-500">de 10 pontos</p>
+                        </div>
+                        <div class="text-5xl">📈</div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-white rounded-3xl p-6 card-hover border border-teal-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-slate-500">Próxima consulta</p>
+                            <p class="text-3xl font-semibold text-teal-700 mt-1">Terapeuta</p>
+                            <p id="proxima-consulta" class="text-teal-600">15/04 - 14:00</p>
+                        </div>
+                        <div class="text-5xl">🗓️</div>
+                    </div>
+                     <button onclick="agendarConsulta()" 
+            class="mt-4 w-full bg-teal-50 text-teal-600 py-2 rounded-xl text-xs font-bold hover:bg-teal-100 transition">
+        ＋ Agendar nova
+    </button>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4 text-slate-700">Últimos acompanhamentos</h3>
+            <div id="ultimos-logs" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+
+        <!-- ==================== PACIENTES ==================== -->
+        <div id="pacientes" class="section">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-semibold text-teal-700">Pacientes</h2>
+                <button onclick="abrirModalPaciente()" 
+                        class="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-3xl flex items-center gap-x-2 font-medium">
+                    <span class="text-xl">＋</span> Adicionar criança/jovem
+                </button>
+            </div>
+
+            <div id="lista-pacientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards preenchidos via JS -->
+            </div>
+        </div>
+
+        <!-- ==================== ACOMPANHAMENTO ==================== -->
+        <div id="acompanhamento" class="section">
+            <h2 class="text-3xl font-semibold text-teal-700 mb-6">Novo Acompanhamento Diário</h2>
+            
+            <div class="bg-white rounded-3xl p-8 max-w-2xl mx-auto">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Criança / Jovem</label>
+                    <select id="select-paciente" class="w-full px-5 py-4 rounded-3xl border border-slate-200 focus:border-teal-400 outline-none text-lg">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Data</label>
+                        <input type="date" id="data-log" value="2026-04-15" class="w-full px-5 py-4 rounded-3xl border border-slate-200 focus:border-teal-400 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Humor / Comportamento</label>
+                        <div class="flex gap-3 text-4xl" id="humor-options">
+                            <button onclick="selecionarHumor(this, '😊')" class="hover:scale-125 transition">😊</button>
+                            <button onclick="selecionarHumor(this, '🙂')" class="hover:scale-125 transition">🙂</button>
+                            <button onclick="selecionarHumor(this, '😐')" class="hover:scale-125 transition">😐</button>
+                            <button onclick="selecionarHumor(this, '😟')" class="hover:scale-125 transition">😟</button>
+                            <button onclick="selecionarHumor(this, '😢')" class="hover:scale-125 transition">😢</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-2 gap-8">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Comunicação <span id="valor-comunicacao" class="font-mono text-teal-600">7</span>/10</label>
+                        <input type="range" id="comunicacao" min="1" max="10" value="7" class="w-full accent-teal-500" oninput="document.getElementById('valor-comunicacao').textContent = this.value">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Interação Social <span id="valor-social" class="font-mono text-teal-600">6</span>/10</label>
+                        <input type="range" id="social" min="1" max="10" value="6" class="w-full accent-teal-500" oninput="document.getElementById('valor-social').textContent = this.value">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Comportamento <span id="valor-comportamento" class="font-mono text-teal-600">8</span>/10</label>
+                        <input type="range" id="comportamento" min="1" max="10" value="8" class="w-full accent-teal-500" oninput="document.getElementById('valor-comportamento').textContent = this.value">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Independência <span id="valor-independencia" class="font-mono text-teal-600">5</span>/10</label>
+                        <input type="range" id="independencia" min="1" max="10" value="5" class="w-full accent-teal-500" oninput="document.getElementById('valor-independencia').textContent = this.value">
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <label class="block text-sm font-medium mb-2">Observações e atividades do dia</label>
+                    <textarea id="observacoes" rows="4" class="w-full px-5 py-4 rounded-3xl border border-slate-200 focus:border-teal-400 outline-none resize-none" placeholder="Ex: Participou bem da terapia de fala, brincou com o irmão, comeu sozinho..."></textarea>
+                </div>
+
+                <button onclick="salvarLog()" 
+                        class="mt-8 w-full bg-teal-600 hover:bg-teal-700 text-white py-5 rounded-3xl text-lg font-medium flex items-center justify-center gap-x-2">
+                    💾 Salvar acompanhamento
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== RELATÓRIOS ==================== -->
+        <div id="relatorios" class="section">
+            <h2 class="text-3xl font-semibold text-teal-700 mb-6">Relatórios e Evolução</h2>
+            
+            <div class="flex gap-4 mb-6">
+                <select id="select-relatorio" onchange="carregarRelatorio()" class="px-6 py-3 rounded-3xl border border-slate-200 focus:border-teal-400 outline-none">
+                    <!-- Preenchido via JS -->
+                </select>
+            </div>
+
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-teal-100">
+    <div class="relative h-[400px] w-full"> <canvas id="grafico-progresso"></canvas>
+    </div>
+    
+    <h4 class="mt-10 text-lg font-medium mb-4 text-teal-700">Histórico completo</h4>
+    </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="tabela-logs">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-4 font-medium">Data</th>
+                                <th class="text-left py-4 font-medium">Comunicação</th>
+                                <th class="text-left py-4 font-medium">Social</th>
+                                <th class="text-left py-4 font-medium">Comportamento</th>
+                                <th class="text-left py-4 font-medium">Independência</th>
+                                <th class="text-left py-4 font-medium">Observações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600" id="tbody-logs">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== DICAS ==================== -->
+        <div id="dicas" class="section">
+    <h2 class="text-3xl font-semibold text-teal-700 mb-6">Dicas de Acompanhamento</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-3xl border border-teal-100">
+            <h3 class="text-lg font-bold text-teal-600 mb-3">🌟 Reforço Positivo</h3>
+            <p class="text-slate-600 text-sm leading-relaxed">
+                Sempre que a criança realizar uma tarefa nova ou demonstrar um comportamento calmo em situações de estresse, utilize o reforço positivo. Pode ser um elogio, um adesivo ou um tempo extra em uma atividade que ela ama.
+            </p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-teal-100">
+            <h3 class="text-lg font-bold text-teal-600 mb-3">📅 Rotinas Visuais</h3>
+            <p class="text-slate-600 text-sm leading-relaxed">
+                A previsibilidade ajuda a reduzir a ansiedade. Use quadros de rotina com imagens ou desenhos para mostrar o que vai acontecer durante o dia. Isso facilita as transições entre atividades.
+            </p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-teal-100">
+            <h3 class="text-lg font-bold text-teal-600 mb-3">🧘 Espaço de Autorregulação</h3>
+            <p class="text-slate-600 text-sm leading-relaxed">
+                Tenha um "cantinho da calma" com almofadas ou objetos sensoriais. Ensine a criança que ela pode ir para lá quando se sentir sobrecarregada, antes mesmo de ocorrer uma crise.
+            </p>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-teal-100">
+            <h3 class="text-lg font-bold text-teal-600 mb-3">🗣️ Comunicação Funcional</h3>
+            <p class="text-slate-600 text-sm leading-relaxed">
+                Incentive a comunicação de qualquer forma (gestos, sons, apontar ou cartões). O foco principal é que a criança consiga expressar suas necessidades para reduzir a frustração.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ESTADO GLOBAL DO SISTEMA ---
+    let pacientes = JSON.parse(localStorage.getItem('tea_pacientes')) || [];
+    let logs = JSON.parse(localStorage.getItem('tea_logs')) || [];
+    let humorSelecionado = '😊';
+    let meuGrafico = null;
+
+    // --- INICIALIZAÇÃO ---
+    document.addEventListener('DOMContentLoaded', () => {
+        atualizarDashboard();
+        renderizarPacientes();
+        preencherSelects();
+    });
+
+    // --- NAVEGAÇÃO ---
+    function showSection(sectionId) {
+        // Esconde todas as seções
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        // Remove active dos links
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        
+        // Ativa a seção e o botão corretos
+        document.getElementById(sectionId).classList.add('active');
+        document.getElementById(`nav-${sectionId}`).classList.add('active');
+
+        if (sectionId === 'relatorios') carregarRelatorio();
+    }
+
+    // --- GESTÃO DE PACIENTES (ATUALIZADA) ---
+function abrirModalPaciente() {
+    const nome = prompt("Nome completo da criança/jovem:");
+    const dataNascimento = prompt("Data de Nascimento (AAAA-MM-DD):", "2020-01-01");
+    const responsavel = prompt("Nome do Responsável:");
+    const proximaConsulta = prompt("Data da próxima consulta (DD/MM - HH:MM):", "15/04 - 14:00");
+
+    if (nome && dataNascimento) {
+        const novoPaciente = {
+            id: Date.now(),
+            nome,
+            dataNascimento,
+            responsavel,
+            proximaConsulta, // Novo campo adicionado
+            dataCadastro: new Date().toLocaleDateString('pt-BR')
+        };
+        pacientes.push(novoPaciente);
+        salvarDados();
+        renderizarPacientes();
+        preencherSelects();
+    }
+}
+
+function calcularIdade(dataNasc) {
+    const hoje = new Date();
+    const nascimento = new Date(dataNasc);
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const m = hoje.getMonth() - nascimento.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
+        idade--;
+    }
+    return idade;
+}
+
+function renderizarPacientes() {
+    const container = document.getElementById('lista-pacientes');
+    container.innerHTML = '';
+
+    pacientes.forEach(p => {
+        const idadeAtual = calcularIdade(p.dataNascimento);
+        container.innerHTML += `
+            <div class="bg-white rounded-3xl p-6 card-hover border border-teal-100 relative">
+                <button onclick="removerPaciente(${p.id})" class="absolute top-4 right-4 text-xs text-red-400 hover:text-red-600">Remover</button>
+                <div class="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center text-3xl mb-4">👦</div>
+                <h3 class="text-xl font-bold text-teal-700">${p.nome}</h3>
+                <p class="text-slate-500 text-sm">${idadeAtual} anos</p>
+                <div class="mt-4 pt-4 border-t border-slate-50">
+                    <p class="text-xs text-slate-400">Responsável: ${p.responsavel}</p>
+                </div>
+            </div>
+            
+        `;
+    });
+}
+
+    function removerPaciente(id) {
+        if(confirm("Deseja remover este paciente e todos os seus registros?")) {
+            pacientes = pacientes.filter(p => p.id !== id);
+            logs = logs.filter(l => l.pacienteId !== id);
+            salvarDados();
+            renderizarPacientes();
+            preencherSelects();
+            atualizarDashboard();
+        }
+    }
+
+    function agendarConsulta() {
+    const pacienteId = document.getElementById('select-paciente').value || 
+                       (pacientes.length > 0 ? pacientes[0].id : null);
+    
+    if (!pacienteId) {
+        alert("Cadastre ou selecione um paciente primeiro!");
+        showSection('pacientes');
+        return;
+    }
+
+    const novaData = prompt("Digite a nova data e hora (Ex: 20/04 - 15:30):");
+    
+    if (novaData) {
+        // Encontra o paciente e atualiza a consulta
+        const index = pacientes.findIndex(p => p.id == pacienteId);
+        if (index !== -1) {
+            pacientes[index].proximaConsulta = novaData;
+            salvarDados();
+            atualizarDashboard();
+            alert("Consulta agendada com sucesso!");
+        }
+    }
+}
+
+    // --- GESTÃO DE ACOMPANHAMENTO (LOGS) ---
+    function selecionarHumor(btn, humor) {
+        document.querySelectorAll('#humor-options button').forEach(b => b.style.transform = 'scale(1)');
+        btn.style.transform = 'scale(1.5)';
+        humorSelecionado = humor;
+    }
+
+    function salvarLog() {
+        const pacienteId = document.getElementById('select-paciente').value;
+        if (!pacienteId) return alert("Selecione um paciente!");
+
+        const novoLog = {
+            id: Date.now(),
+            pacienteId: parseInt(pacienteId),
+            data: document.getElementById('data-log').value,
+            humor: humorSelecionado,
+            comunicacao: parseInt(document.getElementById('comunicacao').value),
+            social: parseInt(document.getElementById('social').value),
+            comportamento: parseInt(document.getElementById('comportamento').value),
+            independencia: parseInt(document.getElementById('independencia').value),
+            obs: document.getElementById('observacoes').value
+        };
+
+        logs.push(novoLog);
+        salvarDados();
+        atualizarDashboard();
+        alert("Acompanhamento salvo!");
+        showSection('dashboard');
+        
+        // Reset campos
+        document.getElementById('observacoes').value = '';
+    }
+
+    // --- DASHBOARD E RELATÓRIOS ---
+    function atualizarDashboard() {
+        document.getElementById('total-pacientes').textContent = pacientes.length;
+        document.getElementById('logs-hoje').textContent = logs.filter(l => l.data === new Date().toISOString().split('T')[0]).length;
+        
+        const ultimosContainer = document.getElementById('ultimos-logs');
+        ultimosContainer.innerHTML = '';
+        
+        const ultimos5 = [...logs].reverse().slice(0, 3);
+        ultimos5.forEach(log => {
+            const pac = pacientes.find(p => p.id === log.pacienteId);
+            ultimosContainer.innerHTML += `
+                <div class="bg-white p-4 rounded-2xl border border-teal-50 shadow-sm">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-bold text-teal-600">${pac ? pac.nome : 'Excluído'}</span>
+                        <span>${log.humor}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 italic">"${log.obs.substring(0, 40)}..."</p>
+                </div>
+            `;
+        });
+    }
+
+    function carregarRelatorio() {
+        const pacId = parseInt(document.getElementById('select-relatorio').value);
+        const logsPaciente = logs.filter(l => l.pacienteId === pacId).sort((a,b) => new Date(a.data) - new Date(b.data));
+        
+        const tbody = document.getElementById('tbody-logs');
+        tbody.innerHTML = '';
+
+        logsPaciente.forEach(l => {
+            tbody.innerHTML += `
+                <tr class="border-b hover:bg-teal-50">
+                    <td class="py-3">${l.data.split('-').reverse().join('/')}</td>
+                    <td>${l.comunicacao}</td>
+                    <td>${l.social}</td>
+                    <td>${l.comportamento}</td>
+                    <td>${l.independencia}</td>
+                    <td class="max-w-xs truncate">${l.obs}</td>
+                </tr>
+            `;
+        });
+
+        renderizarGrafico(logsPaciente);
+    }
+
+    function renderizarGrafico(dados) {
+    const ctx = document.getElementById('grafico-progresso').getContext('2d');
+    if (meuGrafico) meuGrafico.destroy();
+
+    meuGrafico = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dados.map(d => d.data.split('-').reverse().join('/')),
+            datasets: [{
+                label: 'Média de Evolução Geral',
+                data: dados.map(d => (d.comunicacao + d.social + d.comportamento + d.independencia) / 4),
+                borderColor: '#14b8a6',
+                backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                borderWidth: 3,
+                tension: 0.4, // Deixa a linha mais suave/curvada
+                fill: true,
+                pointBackgroundColor: '#14b8a6',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // ESSENCIAL para não esticar infinitamente
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10, // Como sua escala é de 1 a 10
+                    grid: { color: '#f1f5f9' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+}
+
+    // --- UTILITÁRIOS ---
+    function salvarDados() {
+        localStorage.setItem('tea_pacientes', JSON.stringify(pacientes));
+        localStorage.setItem('tea_logs', JSON.stringify(logs));
+    }
+
+    function preencherSelects() {
+        const selects = [document.getElementById('select-paciente'), document.getElementById('select-relatorio')];
+        selects.forEach(sel => {
+            if(!sel) return;
+            sel.innerHTML = '<option value="">Selecione um paciente...</option>';
+            pacientes.forEach(p => {
+                sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
+        });
+    }
+
+    function limparDados() {
+        if(confirm("CUIDADO: Isso apagará TODOS os dados do sistema permanentemente. Deseja continuar?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+</html>
